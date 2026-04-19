@@ -1,4 +1,3 @@
-const { PDFParse } = require("pdf-parse");
 import { cleanExtractedText } from "./cleaner";
 
 export interface ParseResult {
@@ -15,19 +14,31 @@ export interface ParseResult {
  * @returns Cleaned text and metadata
  */
 export async function parsePdfBuffer(dataBuffer: Buffer): Promise<ParseResult> {
-  let parser = null;
+  let parser: any = null;
   try {
+    // Lazy-load parser in runtime to avoid module init mismatches in serverless builds.
+    const pdfParseModule = await import("pdf-parse");
+    const PDFParseCtor =
+      (pdfParseModule as any).PDFParse ||
+      (pdfParseModule as any).default?.PDFParse ||
+      (pdfParseModule as any).default;
+
+    if (!PDFParseCtor) {
+      throw new Error("PDF parser module did not expose a valid constructor.");
+    }
+
     // Initialize standard PDF parser
-    parser = new PDFParse({ data: dataBuffer });
+    const activeParser: any = new PDFParseCtor({ data: dataBuffer });
+    parser = activeParser;
     
     // getText automatically enforces logical layout via lineEnforce
-    const textResult = await parser.getText({
+    const textResult = await activeParser.getText({
       lineEnforce: true,
       pageJoiner: "\n\n--- PAGE BREAK ---\n\n",
     });
     
     // Optionally grab metadata
-    const infoResult = await parser.getInfo();
+    const infoResult = await activeParser.getInfo();
     
     // Clean the extracted raw text
     const cleanedText = cleanExtractedText(textResult.text);

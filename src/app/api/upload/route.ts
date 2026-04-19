@@ -16,6 +16,7 @@ const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10 MB
 
 // Vercel timeout override – Hobby tier allows up to 60 s
 export const maxDuration = 60;
+export const runtime = "nodejs";
 
 /**
  * POST /api/upload

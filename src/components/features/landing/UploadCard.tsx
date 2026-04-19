@@ -127,7 +127,13 @@ export function UploadCard({ isModalContent = false }: { isModalContent?: boolea
         body: formData,
       });
 
-      const data = await response.json();
+      const raw = await response.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error("Upload endpoint returned a non-JSON response. Please try again.");
+      }
 
       if (!response.ok) {
         throw new Error(data.error || "Upload failed");

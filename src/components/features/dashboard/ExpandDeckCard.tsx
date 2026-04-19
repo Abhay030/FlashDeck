@@ -65,7 +65,13 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       formData.append("expandDeckId", selectedDeckId);
 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const raw = await res.text();
+      let data: any = {};
+      try {
+        data = raw ? JSON.parse(raw) : {};
+      } catch {
+        throw new Error("Upload endpoint returned a non-JSON response. Please retry.");
+      }
 
       if (!res.ok) throw new Error(data.error || "Upload failed");
       if (res.status === 206 || data.partial) {
