@@ -2,6 +2,8 @@
 
 A production-grade, AI-powered spaced repetition platform that converts educational PDFs into high-quality flashcards with real-time analytics. Built for performance, stability, and intelligent learning.
 
+## LIVE :- https://flash-deck-wine.vercel.app/
+
 ## 🚀 Tech Stack
 
 *   **Framework:** Next.js 15 (App Router) + Turbopack
@@ -63,3 +65,28 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 *   **Optimistic UI Hydration:** Clicking a rating instantly transitions to the next card, while the database syncs silently in the background.
 *   **Micro-interactions:** Consistent button press scales, premium 3D CSS `preserve-3d` flips, and "Edited" human-in-the-loop badges.
 *   **Error Boundaries:** Graceful fallback UI skeletons prevent jarring layout shifts during data fetching.
+
+---
+
+## 📌 Project Reflection
+
+### What I built and which problem I picked
+I built an AI-powered flashcard platform that turns raw educational PDFs into study-ready decks with SM-2 spaced repetition and analytics.  
+The problem I picked was reducing the time and friction students face when converting long notes/slides into high-quality active-recall cards.
+
+### Key decisions and tradeoffs I made
+*   **Two-stage AI pipeline (extract concepts, then generate cards):** Better quality and less duplication, but increased backend complexity.
+*   **Embedded cards in `Deck` documents:** Fast study reads and simple updates, but less ideal for very large cross-deck card queries.
+*   **Serverless-first constraints:** Clamped chunk processing to avoid timeouts; this protects reliability but may return partial generation on very large PDFs.
+*   **No auth for current version:** Intentional zero-friction demo flow for evaluators/recruiters, at the cost of no user-level isolation yet.
+
+### What I'd improve or add with more time
+*   Add async/background job orchestration (queue + worker) for long PDFs.
+*   Introduce authentication + per-user deck isolation.
+*   Add stronger observability (structured logs, upload diagnostics, retry dashboards).
+*   Add test coverage for upload pipeline and parser edge cases in production environments.
+
+### Interesting challenges and how I solved them
+*   **Production-only parser/runtime failures on Vercel:** Fixed by forcing Node runtime for upload, adjusting parser loading strategy, and making worker/module tracing deployment-safe.
+*   **Silent persistence issues:** Hardened upload API to fail fast on DB issues and never report false success.
+*   **Schema mismatch during deck saves:** Normalized chunk storage format to match model expectations and preserved chunk metadata flow where needed.
