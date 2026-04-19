@@ -31,6 +31,16 @@ function serializeError(err: unknown): string {
   return String(err);
 }
 
+/** Fewer chunks per request on Vercel = faster pipeline (timeout / HTML 500 if wall clock exceeds limit). */
+function getMaxNewChunks(): number {
+  const raw = process.env.UPLOAD_MAX_CHUNKS;
+  if (raw != null && raw !== "") {
+    const n = Number(raw);
+    if (!Number.isNaN(n) && n >= 1 && n <= 5) return n;
+  }
+  return process.env.VERCEL === "1" ? 2 : 5;
+}
+
 /**
  * POST /api/upload
  * Handles two modes:
@@ -61,6 +71,10 @@ async function runUpload(req: NextRequest): Promise<NextResponse> {
   let rawConcepts: any[] = [];
 
   try {
+    console.log(
+      `[Upload API] start VERCEL=${process.env.VERCEL ?? "0"} maxDuration=60 chunksCap=${getMaxNewChunks()}`
+    );
+
     if (!process.env.MONGODB_URI?.trim()) {
       return NextResponse.json(
         { error: "Server misconfiguration: MONGODB_URI is not set. Add it in Vercel → Settings → Environment Variables." },
@@ -142,7 +156,7 @@ async function runUpload(req: NextRequest): Promise<NextResponse> {
     }
 
     // ---------- Determine how many new chunks to process ----------
-    const MAX_NEW_CHUNKS = 5; // 5 chunks × 3 cards = 15 cards max
+    const MAX_NEW_CHUNKS = getMaxNewChunks(); // default 2 on Vercel, 5 locally; UPLOAD_MAX_CHUNKS overrides
     const sourceChunks = deck ? deck.chunks : allChunks;
     const remaining = sourceChunks.slice(startChunk);
     const newChunkCount = Math.min(MAX_NEW_CHUNKS, remaining.length);

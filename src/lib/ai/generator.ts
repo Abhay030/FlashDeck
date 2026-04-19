@@ -7,9 +7,9 @@ export interface FlashcardGeneration {
   topic: string; // which concept it covers
 }
 
-// We use LLaMA 3.3 70B for synthesizing teacher-quality data
-// It is incredible at following strict schema constraints natively.
-const GENERATION_MODEL = "llama-3.3-70b-versatile";
+// Default to 8B instant so serverless (Vercel) stays within time limits; override for quality on powerful hosts.
+const GENERATION_MODEL =
+  process.env.GROQ_GENERATION_MODEL?.trim() || "llama-3.1-8b-instant";
 
 /**
  * Transforms isolated raw concepts into high-quality educational flashcards.
@@ -62,7 +62,8 @@ Format:
       ],
       model: GENERATION_MODEL,
       temperature: 0.3, // slight temperature for creative educational variations
-      response_format: { type: "json_object" }, 
+      response_format: { type: "json_object" },
+      max_tokens: 4096,
     });
   }, 3, 2000);
 
