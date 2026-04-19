@@ -16,8 +16,20 @@ export interface ParseResult {
 export async function parsePdfBuffer(dataBuffer: Buffer): Promise<ParseResult> {
   let parser: any = null;
   try {
-    // Force Node-targeted entry to avoid browser-only globals (e.g., DOMMatrix).
-    const pdfParseModule = await import("pdf-parse/node");
+    // Ensure browser-like matrix APIs exist in Node runtimes used by serverless hosts.
+    if (typeof (globalThis as any).DOMMatrix === "undefined") {
+      try {
+        const canvasModule = await import("@napi-rs/canvas");
+        const DOMMatrixCtor = (canvasModule as any).DOMMatrix;
+        if (DOMMatrixCtor) {
+          (globalThis as any).DOMMatrix = DOMMatrixCtor;
+        }
+      } catch {
+        // If native canvas is unavailable, pdf-parse may still fail with a clear parser error below.
+      }
+    }
+
+    const pdfParseModule = await import("pdf-parse");
     const PDFParseCtor =
       (pdfParseModule as any).PDFParse ||
       (pdfParseModule as any).default?.PDFParse ||
