@@ -1,20 +1,12 @@
 "use client";
 
-import type { LucideIcon } from "lucide-react";
 import { MaxWidthWrapper } from "@/components/layout/MaxWidthWrapper";
 import { motion } from "framer-motion";
-import { productIcons } from "@/lib/productIcons";
+import { FileText, Sparkles, Target, BrainCircuit } from "lucide-react";
 
-const features: {
-  icon: LucideIcon;
-  name: string;
-  description: string;
-  bg: string;
-  border: string;
-  accent: string;
-}[] = [
+const features = [
   {
-    icon: productIcons.smartPdf,
+    icon: FileText,
     name: "Reads your PDF like a human",
     description:
       "Text is cleaned, then split into paragraph-aware chunks with sensible token limits — so the model sees real sections, not random character slices.",
@@ -23,7 +15,7 @@ const features: {
     accent: "text-[#B8860B]",
   },
   {
-    icon: productIcons.aiPass,
+    icon: Sparkles,
     name: "Two AI passes, one tight deck",
     description:
       "First pass pulls key concepts; second pass turns them into Q&A cards. Powered by Groq for fast, structured JSON you can study immediately.",
@@ -32,7 +24,7 @@ const features: {
     accent: "text-[#C2185B]",
   },
   {
-    icon: productIcons.deduplication,
+    icon: Target,
     name: "Smarter deduplication",
     description:
       "Similar questions get merged using Jaccard-style overlap on wording — fewer near-duplicate cards, more distinct practice.",
@@ -41,7 +33,7 @@ const features: {
     accent: "text-[#0277BD]",
   },
   {
-    icon: productIcons.sm2,
+    icon: BrainCircuit,
     name: "Spaced repetition + room to grow",
     description:
       "Rate cards with SM‑2 scheduling. Big PDF? We process in batches — generate more from the same file without starting over.",
@@ -102,10 +94,10 @@ export function FeatureShowcase() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {features.map((feature, i) => {
-            const FeatureIcon = feature.icon;
+            const Icon = feature.icon;
             return (
-            <motion.div
-              key={feature.name}
+              <motion.div
+                key={feature.name}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -115,20 +107,20 @@ export function FeatureShowcase() {
                 ${feature.bg} ${feature.border}
                 transition-all duration-250 hover:-translate-y-2 hover:shadow-xl
               `}
-            >
-              <div
-                className="absolute -top-1 right-3 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-white/60 bg-white/70 shadow-sm backdrop-blur-sm dark:border-white/10 dark:bg-black/25"
-                aria-hidden
               >
-                <FeatureIcon className={`h-7 w-7 ${feature.accent}`} strokeWidth={1.75} />
-              </div>
+                <div
+                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl border border-white/40 bg-white/35 text-current transition-transform duration-200 group-hover:-rotate-6 group-hover:scale-110"
+                  aria-hidden
+                >
+                  <Icon className="h-5 w-5" strokeWidth={1.9} />
+                </div>
 
-              <h3 className={`mb-3 mt-6 text-xs font-semibold uppercase tracking-widest ${feature.accent}`}>
-                {feature.name}
-              </h3>
-              <p className="text-sm font-medium leading-relaxed text-foreground/85">{feature.description}</p>
-            </motion.div>
-          );
+                <h3 className={`mb-3 mt-6 text-xs font-semibold uppercase tracking-widest ${feature.accent}`}>
+                  {feature.name}
+                </h3>
+                <p className="text-sm font-medium leading-relaxed text-foreground/85">{feature.description}</p>
+              </motion.div>
+            );
           })}
         </div>
       </MaxWidthWrapper>

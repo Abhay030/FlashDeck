@@ -6,8 +6,6 @@ import { Sparkles, ChevronDown, ChevronUp, UploadCloud, Loader2, File, Info } fr
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { parseJsonResponse } from "@/lib/parseJsonResponse";
-import { getClientMaxUploadBytes } from "@/lib/uploadLimits";
 
 interface Deck {
   _id: string;
@@ -18,6 +16,8 @@ interface Deck {
 interface ExpandDeckCardProps {
   decks: Deck[];
 }
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
   const router = useRouter();
@@ -35,11 +35,8 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       toast.error("Invalid file type", { description: "Please upload a PDF." });
       return false;
     }
-    const maxBytes = getClientMaxUploadBytes();
-    if (f.size > maxBytes) {
-      toast.error("File too large", {
-        description: `Max ${(maxBytes / (1024 * 1024)).toFixed(1)} MB on this host.`,
-      });
+    if (f.size > MAX_FILE_SIZE) {
+      toast.error("File too large", { description: "Max 10 MB." });
       return false;
     }
     return true;
@@ -68,12 +65,17 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       formData.append("expandDeckId", selectedDeckId);
 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await parseJsonResponse<{
-        error?: string;
-        metadata?: { newCardsAdded?: number; deckId?: string };
-      }>(res);
+      const data = await res.json();
 
       if (!res.ok) throw new Error(data.error || "Upload failed");
+      if (res.status === 206 || data.partial) {
+        toast.warning("Generated but not saved", {
+          id: toastId,
+          description: "Cards were created, but persistence failed. Please retry once DB is reachable.",
+        });
+        setUploading(false);
+        return;
+      }
 
       toast.success("Cards generated!", {
         id: toastId,
@@ -83,7 +85,7 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       setUploading(false);
 
       setTimeout(() => {
-        if (data.metadata?.deckId) {
+        if (data.metadata?.deckId && data.metadata.deckId !== "partial_unpersisted") {
           router.push(`/study/${data.metadata.deckId}`);
         } else {
           router.refresh();

@@ -24,11 +24,6 @@ async function connectToDatabase() {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
-      // Fail fast with a clear error instead of hanging until the serverless wall time (HTML 500).
-      serverSelectionTimeoutMS: 12_000,
-      connectTimeoutMS: 12_000,
-      socketTimeoutMS: 45_000,
-      maxPoolSize: 5,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose) => {

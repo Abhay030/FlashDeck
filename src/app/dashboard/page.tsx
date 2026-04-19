@@ -9,11 +9,6 @@ import type { AchievementTriggers } from "@/components/features/dashboard/MicroA
 
 export const dynamic = "force-dynamic";
 
-export const metadata = {
-  title: "Dashboard",
-  description: "Your decks, study streaks, goals, and insights — FlashDeck AI workspace.",
-};
-
 export default async function DashboardPage() {
   try {
     await connectToDatabase();

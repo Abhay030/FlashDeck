@@ -1,27 +1,27 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { FileUp, Wand2, Brain } from "lucide-react";
 import { MaxWidthWrapper } from "@/components/layout/MaxWidthWrapper";
-import { productIcons } from "@/lib/productIcons";
 
 const steps = [
   {
     step: "01",
     title: "Drop your PDF",
     body: "Notes, slides, or a chapter — one file is enough to get started.",
-    icon: productIcons.upload,
+    icon: FileUp,
   },
   {
     step: "02",
     title: "AI builds the deck",
     body: "Concepts → flashcards — then smart dedup so you don’t drown in duplicates.",
-    icon: productIcons.aiBuild,
+    icon: Wand2,
   },
   {
     step: "03",
     title: "Study with science",
     body: "Rate cards, build a streak, and let SM‑2 bring cards back when you need them.",
-    icon: productIcons.sm2,
+    icon: Brain,
   },
 ];
 

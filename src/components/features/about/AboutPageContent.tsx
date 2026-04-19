@@ -2,25 +2,33 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Zap, BookOpen, ArrowRight, Heart } from "lucide-react";
-import { productIcons } from "@/lib/productIcons";
+import {
+  Sparkles,
+  Brain,
+  Target,
+  Zap,
+  BookOpen,
+  ArrowRight,
+  Heart,
+  Layers,
+} from "lucide-react";
 import { MaxWidthWrapper } from "@/components/layout/MaxWidthWrapper";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const pillars = [
   {
-    icon: productIcons.smartPdf,
+    icon: Layers,
     title: "From document to deck",
     desc: "Semantic chunking, two AI passes, and deduplication — so you spend time recalling, not copy-pasting.",
   },
   {
-    icon: productIcons.sm2,
+    icon: Brain,
     title: "Memory that respects science",
     desc: "SM‑2 scheduling means each rating reshapes when you’ll see a card again — closer to how memory actually works.",
   },
   {
-    icon: productIcons.dashboardHabit,
+    icon: Target,
     title: "Habits you can feel",
     desc: "Streaks, goals, weak areas, and a dashboard that nudges you toward the next right action — not just more screens.",
   },

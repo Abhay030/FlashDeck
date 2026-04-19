@@ -7,8 +7,8 @@ import { UploadCloud, File, AlertCircle, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { parseJsonResponse } from "@/lib/parseJsonResponse";
-import { getClientMaxUploadBytes } from "@/lib/uploadLimits";
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 const PROCESSING_STAGES = [
   "Uploading PDF...",
@@ -73,12 +73,8 @@ export function UploadCard({ isModalContent = false }: { isModalContent?: boolea
       toast.error("Invalid file type", { description: "Please upload a valid PDF document." });
       return false;
     }
-    const maxBytes = getClientMaxUploadBytes();
-    if (selectedFile.size > maxBytes) {
-      const mb = (maxBytes / (1024 * 1024)).toFixed(1);
-      toast.error("File too large", {
-        description: `Max ${mb} MB for this host (Vercel limits uploads to ~4.5 MB unless you use direct storage).`,
-      });
+    if (selectedFile.size > MAX_FILE_SIZE) {
+      toast.error("File too large", { description: "Maximum allowed file size is 10MB." });
       return false;
     }
     return true;
@@ -131,11 +127,7 @@ export function UploadCard({ isModalContent = false }: { isModalContent?: boolea
         body: formData,
       });
 
-      const data = await parseJsonResponse<{
-        error?: string;
-        partial?: boolean;
-        metadata?: { deckId?: string; newCardsAdded?: number };
-      }>(response);
+      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.error || "Upload failed");
@@ -144,15 +136,12 @@ export function UploadCard({ isModalContent = false }: { isModalContent?: boolea
       if (stageIntervalRef.current) clearInterval(stageIntervalRef.current);
 
       if (response.status === 206 || data.partial) {
-        toast.warning("Partial save", {
+        toast.warning("Generated but not saved", {
           id: toastId,
           description:
-            "Cards were generated but saving hit a snag. Head to the dashboard — your work may still be there.",
+            "Cards were generated, but persistence failed. Please retry once your database connection is healthy.",
         });
         setIsUploading(false);
-        setTimeout(() => {
-          router.push("/dashboard");
-        }, 2800);
         return;
       }
 
@@ -250,8 +239,7 @@ export function UploadCard({ isModalContent = false }: { isModalContent?: boolea
                   Drag & drop or click to upload
                 </p>
                 <p className="text-xs text-muted-foreground/70">
-                  PDF only — max size depends on host (~4.4&nbsp;MB on Vercel, 10&nbsp;MB locally). Long docs process in
-                  batches.
+                  PDF only, max 10&nbsp;MB. Long docs process in batches — you can generate more later.
                 </p>
               </motion.div>
             )}

@@ -11,8 +11,10 @@ import {
   Pencil,
   LibrarySquare,
   ArrowRight,
+  FileText,
+  BrainCircuit,
+  BarChart3,
 } from "lucide-react";
-import { productIcons } from "@/lib/productIcons";
 import { MaxWidthWrapper } from "@/components/layout/MaxWidthWrapper";
 import { UploadCard } from "./UploadCard";
 import { buttonVariants } from "@/components/ui/button";
@@ -104,18 +106,16 @@ export function HeroSection() {
               transition={{ duration: 0.5, delay: 0.28 }}
               className="mt-8 flex flex-wrap justify-center gap-2 lg:justify-start"
             >
-              {(
-                [
-                  { Icon: productIcons.smartPdf, label: "Smart PDF → chunks" },
-                  { Icon: productIcons.sm2, label: "SM‑2 scheduling" },
-                  { Icon: productIcons.dashboardHabit, label: "Dashboard habits" },
-                ] as const
-              ).map(({ Icon, label }) => (
+              {[
+                { icon: FileText, label: "Smart PDF → chunks" },
+                { icon: BrainCircuit, label: "SM‑2 scheduling" },
+                { icon: BarChart3, label: "Dashboard habits" },
+              ].map(({ icon: Icon, label }) => (
                 <span
                   key={label}
                   className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm"
                 >
-                  <Icon className="h-4 w-4 shrink-0 text-primary" strokeWidth={2} aria-hidden />
+                  <Icon className="h-4 w-4 text-primary" strokeWidth={1.9} />
                   {label}
                 </span>
               ))}

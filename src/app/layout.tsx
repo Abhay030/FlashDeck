@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { Navbar } from "@/components/layout/Navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { TabTitleGuard } from "@/components/layout/TabTitleGuard";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -12,17 +13,13 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(
-    process.env.NEXT_PUBLIC_APP_URL ??
-      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000")
-  ),
-  title: {
-    default: "FlashDeck AI",
-    template: "%s | FlashDeck AI",
+  title: "FlashDeck",
+  description: "Turn PDFs into flashcards and build a durable study habit with smart repetition.",
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
   },
-  description:
-    "Turn PDFs into AI flashcards with spaced repetition — study, streaks, and a dashboard built for habits.",
-  applicationName: "FlashDeck AI",
 };
 
 export default function RootLayout({
@@ -44,6 +41,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="relative flex min-h-screen flex-col">
+            <TabTitleGuard />
             <Navbar />
             <main className="flex-1 flex flex-col">{children}</main>
           </div>
