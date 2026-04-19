@@ -16,17 +16,25 @@ export interface ParseResult {
 export async function parsePdfBuffer(dataBuffer: Buffer): Promise<ParseResult> {
   let parser: any = null;
   try {
-    // Ensure browser-like matrix APIs exist in Node runtimes used by serverless hosts.
+    // Provide a lightweight DOMMatrix polyfill in Node runtimes where it's missing.
+    // pdf.js needs the symbol to exist for transform helpers used during parsing.
     if (typeof (globalThis as any).DOMMatrix === "undefined") {
-      try {
-        const canvasModule = await import("@napi-rs/canvas");
-        const DOMMatrixCtor = (canvasModule as any).DOMMatrix;
-        if (DOMMatrixCtor) {
-          (globalThis as any).DOMMatrix = DOMMatrixCtor;
+      class DOMMatrixPolyfill {
+        constructor(_init?: unknown) {}
+        multiplySelf(): this { return this; }
+        preMultiplySelf(): this { return this; }
+        translateSelf(): this { return this; }
+        scaleSelf(): this { return this; }
+        rotateSelf(): this { return this; }
+        skewXSelf(): this { return this; }
+        skewYSelf(): this { return this; }
+        inverse(): this { return this; }
+        transformPoint(point: any) { return point; }
+        static fromMatrix(): DOMMatrixPolyfill {
+          return new DOMMatrixPolyfill();
         }
-      } catch {
-        // If native canvas is unavailable, pdf-parse may still fail with a clear parser error below.
       }
+      (globalThis as any).DOMMatrix = DOMMatrixPolyfill;
     }
 
     const pdfParseModule = await import("pdf-parse");
