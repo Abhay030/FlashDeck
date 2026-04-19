@@ -16,8 +16,8 @@ export interface ParseResult {
 export async function parsePdfBuffer(dataBuffer: Buffer): Promise<ParseResult> {
   let parser: any = null;
   try {
-    // Lazy-load parser in runtime to avoid module init mismatches in serverless builds.
-    const pdfParseModule = await import("pdf-parse");
+    // Force Node-targeted entry to avoid browser-only globals (e.g., DOMMatrix).
+    const pdfParseModule = await import("pdf-parse/node");
     const PDFParseCtor =
       (pdfParseModule as any).PDFParse ||
       (pdfParseModule as any).default?.PDFParse ||
