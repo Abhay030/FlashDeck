@@ -6,6 +6,8 @@ import { Sparkles, ChevronDown, ChevronUp, UploadCloud, Loader2, File, Info } fr
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
+import { parseJsonResponse } from "@/lib/parseJsonResponse";
+import { getClientMaxUploadBytes } from "@/lib/uploadLimits";
 
 interface Deck {
   _id: string;
@@ -16,8 +18,6 @@ interface Deck {
 interface ExpandDeckCardProps {
   decks: Deck[];
 }
-
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
 
 export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
   const router = useRouter();
@@ -35,8 +35,11 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       toast.error("Invalid file type", { description: "Please upload a PDF." });
       return false;
     }
-    if (f.size > MAX_FILE_SIZE) {
-      toast.error("File too large", { description: "Max 10 MB." });
+    const maxBytes = getClientMaxUploadBytes();
+    if (f.size > maxBytes) {
+      toast.error("File too large", {
+        description: `Max ${(maxBytes / (1024 * 1024)).toFixed(1)} MB on this host.`,
+      });
       return false;
     }
     return true;
@@ -65,7 +68,10 @@ export function ExpandDeckCard({ decks }: ExpandDeckCardProps) {
       formData.append("expandDeckId", selectedDeckId);
 
       const res = await fetch("/api/upload", { method: "POST", body: formData });
-      const data = await res.json();
+      const data = await parseJsonResponse<{
+        error?: string;
+        metadata?: { newCardsAdded?: number; deckId?: string };
+      }>(res);
 
       if (!res.ok) throw new Error(data.error || "Upload failed");
 

@@ -16,6 +16,9 @@ const MAX_UPLOAD_SIZE = 10 * 1024 * 1024; // 10 MB
 // Vercel timeout override – Hobby tier allows up to 60 s
 export const maxDuration = 60;
 
+/** pdf-parse + mongoose require Node; avoid Edge where these fail. */
+export const runtime = "nodejs";
+
 /**
  * POST /api/upload
  * Handles two modes:
@@ -34,6 +37,19 @@ export async function POST(req: NextRequest) {
   let rawConcepts: any[] = [];
 
   try {
+    if (!process.env.MONGODB_URI?.trim()) {
+      return NextResponse.json(
+        { error: "Server misconfiguration: MONGODB_URI is not set. Add it in Vercel → Settings → Environment Variables." },
+        { status: 500 }
+      );
+    }
+    if (!process.env.GROQ_API_KEY?.trim()) {
+      return NextResponse.json(
+        { error: "Server misconfiguration: GROQ_API_KEY is not set. Add it in Vercel → Settings → Environment Variables." },
+        { status: 500 }
+      );
+    }
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const expandDeckId = (formData.get("expandDeckId") as string) ?? null;
