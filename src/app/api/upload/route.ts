@@ -19,6 +19,18 @@ export const maxDuration = 60;
 /** pdf-parse + mongoose require Node; avoid Edge where these fail. */
 export const runtime = "nodejs";
 
+export const dynamic = "force-dynamic";
+
+function safePercent(processed: number, total: number): number {
+  if (!total || total <= 0) return 0;
+  return Math.min(100, Math.round((processed / total) * 100));
+}
+
+function serializeError(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  return String(err);
+}
+
 /**
  * POST /api/upload
  * Handles two modes:
@@ -32,6 +44,18 @@ export const runtime = "nodejs";
  *   - limitReached flag when the 300‑card cap is hit
  */
 export async function POST(req: NextRequest) {
+  try {
+    return await runUpload(req);
+  } catch (fatal: unknown) {
+    console.error("[Upload API] Fatal (ensuring JSON):", fatal);
+    return NextResponse.json(
+      { error: serializeError(fatal), code: "UPLOAD_FATAL" },
+      { status: 500 }
+    );
+  }
+}
+
+async function runUpload(req: NextRequest): Promise<NextResponse> {
   let filePath: string | null = null;
   let finalizedCards: any[] = [];
   let rawConcepts: any[] = [];
@@ -85,6 +109,16 @@ export async function POST(req: NextRequest) {
 
     // ---------- Chunking ----------
     const allChunks = chunkText(parsedData.text, { maxTokensPerChunk: 1000 });
+    if (allChunks.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "No usable text could be chunked from this PDF. It may be scanned images, encrypted, or empty — try a text-based PDF export.",
+        },
+        { status: 422 }
+      );
+    }
+
     let deck: any = null;
     let startChunk = 0;
     let totalChunks = allChunks.length;
@@ -173,50 +207,63 @@ export async function POST(req: NextRequest) {
 
     // ---------- Build progress payload ----------
     const processed = (deck ? (deck.processedChunks ?? 0) + newChunkCount : newChunkCount);
-    const percent = Math.round((processed / totalChunks) * 100);
+    const percent = safePercent(processed, totalChunks);
     // Up‑next preview – take up to 2 upcoming chunks, grab first 3 words each, safely handling missing chunks
     const upNextChunks = sourceChunks.slice(startChunk + newChunkCount, startChunk + newChunkCount + 2);
     const upNextPreview = upNextChunks
       .filter((c: unknown): c is string => typeof c === "string" && c.length > 0)
       .map((c: string) => c.split(/\s+/).slice(0, 3).join(" "));
 
-    // ---------- Response ----------
-    return NextResponse.json({
-      success: true,
-      expanded: !!deck,
-      limitReached,
-      metadata: {
-        deckId: savedDeckId,
-        newCardsAdded: finalizedCards.length,
-        processedChunks: processed,
-        totalChunks,
-        percent,
-        upNextPreview,
+    // ---------- Response (keep payload small — Vercel limits response size; clients only need metadata) ----------
+    return NextResponse.json(
+      {
+        success: true,
+        expanded: !!deck,
+        limitReached,
+        metadata: {
+          deckId: savedDeckId,
+          newCardsAdded: finalizedCards.length,
+          processedChunks: processed,
+          totalChunks,
+          percent,
+          upNextPreview,
+        },
+        progress: {
+          processed,
+          total: totalChunks,
+          percent,
+        },
+        summary: {
+          conceptCount: rawConcepts.length,
+          cardCount: finalizedCards.length,
+        },
       },
-      progress: {
-        processed,
-        total: totalChunks,
-        percent,
-      },
-      concepts: rawConcepts,
-      flashcards: finalizedCards,
-    }, { status: 200 });
-
-  } catch (error: any) {
+      { status: 200 }
+    );
+  } catch (error: unknown) {
     console.error(`[Upload API] Unexpected error:`, error);
     if (finalizedCards && finalizedCards.length > 0) {
-      return NextResponse.json({
-        success: false,
-        partial: true,
-        error: "Process interrupted, returning partial flashcards.",
-        flashcards: finalizedCards,
-      }, { status: 206 });
+      return NextResponse.json(
+        {
+          success: false,
+          partial: true,
+          error: "Process interrupted, returning partial flashcards.",
+          summary: { cardCount: finalizedCards.length },
+        },
+        { status: 206 }
+      );
     }
-    return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: serializeError(error) || "Internal Server Error", code: "UPLOAD_ERROR" },
+      { status: 500 }
+    );
   } finally {
-    // Cleanup temporary file
     if (filePath) {
-      try { await fs.unlink(filePath); } catch (e) { console.warn(`[Upload API] Cleanup failed:`, e); }
+      try {
+        await fs.unlink(filePath);
+      } catch (e) {
+        console.warn(`[Upload API] Cleanup failed:`, e);
+      }
     }
   }
 }
